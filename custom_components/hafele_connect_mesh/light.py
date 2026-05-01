@@ -7,9 +7,6 @@ from datetime import timedelta
 import asyncio
 
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP,
-    ATTR_HS_COLOR,
     ColorMode,
     LightEntity,
 )
@@ -47,7 +44,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         _LOGGER,
         name="light",
         update_method=async_update_data,
-        update_interval=timedelta(seconds=10),  # Reduced update interval
+        update_interval=timedelta(seconds=10),
     )
 
     await coordinator.async_refresh()
@@ -111,8 +108,8 @@ class ConnectMeshLight(CoordinatorEntity, LightEntity):
         self._state = True
         self._pending_update = True
 
-        if ATTR_BRIGHTNESS in kwargs:
-            brightness = kwargs[ATTR_BRIGHTNESS]
+        if "brightness" in kwargs:
+            brightness = kwargs["brightness"]
             self._brightness = brightness
             self._last_known_brightness = brightness
             await self._api_client.set_lightness(self._attr_unique_id, self._ha_to_api_brightness(brightness))
@@ -122,14 +119,14 @@ class ConnectMeshLight(CoordinatorEntity, LightEntity):
         else:
             await self._api_client.set_power(self._attr_unique_id, True)
 
-        if ATTR_COLOR_TEMP in kwargs:
-            kelvin = color_temperature_mired_to_kelvin(kwargs[ATTR_COLOR_TEMP])
+        if "color_temp" in kwargs:
+            kelvin = color_temperature_mired_to_kelvin(kwargs["color_temp"])
             kelvin = max(MIN_KELVIN, min(MAX_KELVIN, kelvin))
-            self._color_temp = kwargs[ATTR_COLOR_TEMP]
+            self._color_temp = kwargs["color_temp"]
             await self._api_client.set_temperature(self._attr_unique_id, kelvin)
 
-        if ATTR_HS_COLOR in kwargs:
-            self._hs_color = kwargs[ATTR_HS_COLOR]
+        if "hs_color" in kwargs:
+            self._hs_color = kwargs["hs_color"]
             hue, saturation = self._hs_color
             hue_api = hue / 360 * 65535
             saturation_api = saturation / 100
@@ -185,6 +182,6 @@ class ConnectMeshLight(CoordinatorEntity, LightEntity):
 
     async def _async_update_ha_state(self):
         """Update Home Assistant state and clear pending update flag."""
-        await asyncio.sleep(1)  # Short delay to allow API to process the change
+        await asyncio.sleep(1)
         self._pending_update = False
         await self.coordinator.async_request_refresh()
